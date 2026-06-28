@@ -8,6 +8,8 @@ def iniciar_figura_nova(event):
         figura_nova = ("linha", (event.x, event.y, event.x, event.y))
     elif tipo_figura_var.get() == 'Retangulos':
         figura_nova = ('Retangulos', (event.x, event.y, event.x, event.y))
+    elif tipo_figura_var.get() == 'Ovais':
+        figura_nova = ('Ovais', (event.x, event.y, event.x, event.y))
     else :
         figura_nova = ("rabisco", [(event.x, event.y)])
 
@@ -18,6 +20,8 @@ def atualizar_figura_nova(event):
         figura_nova[1].append((event.x, event.y))
     elif figura_nova[0] == 'Retangulos':
         figura_nova = ('Retangulos', (figura_nova[1][0], figura_nova[1][1], event.x, event.y))
+    elif figura_nova[0] == 'Ovais':
+        figura_nova = ('Ovais',(figura_nova[1][0], figura_nova[1][1], event.x, event.y))
     else : # figura_nova[0] == "linha"
         figura_nova = ("linha", (figura_nova[1][0], figura_nova[1][1], event.x, event.y))
     desenhar_figuras()
@@ -36,6 +40,8 @@ def desenhar_figuras():
             canvas.create_line(values[0], values[1], values[2], values[3])
         elif fig == 'Retangulos':
             canvas.create_rectangle(values[0], values[1], values[2], values[3])
+        elif fig == 'Ovais':
+            canvas.create_oval(values[0], values[1], values[2], values[3])
         else : # fig == "rabisco"
             canvas.create_line(values)
 
@@ -45,6 +51,8 @@ def desenhar_figura_nova():
         canvas.create_line(values[0], values[1], values[2], values[3], dash=(4, 2))
     elif fig == 'Retangulos':
             canvas.create_rectangle(values[0], values[1], values[2], values[3], dash=(4, 2))
+    elif fig == 'Ovais':
+            canvas.create_oval(values[0], values[1], values[2], values[3], dash=(4, 2))
     else : # fig == "rabisco"
         canvas.create_line(values, dash=(4, 2))
 
@@ -77,7 +85,7 @@ label.grid(column=0, row=0, sticky=W, **paddings)
 # option menu
 tipo_figura_var = StringVar(root) # Guarda o tipo de figura selecionado no option menu (linha ou rabisco)
 option_menu = ttk.OptionMenu(frame, tipo_figura_var,
-                             'Linha', 'Linha', 'Rabisco','Retangulos' )
+                             'Linha', 'Linha', 'Rabisco','Retangulos', 'Ovais')
 option_menu.grid(column=1, row=0, sticky=W, **paddings)
 
 # Área de desenho
