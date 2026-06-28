@@ -1,97 +1,123 @@
+from abc import ABC, abstractmethod
 from tkinter import *
 from tkinter import ttk
 
-# Quando mouse é pressionado
-def iniciar_figura_nova(event): 
+class Figura(ABC):
+    def __init__(self, cor, cor_preench = ''):
+        self.cor = cor
+        self.cor_preench = cor_preench
+    @abstractmethod
+    def atualizar(self, x, y):
+        pass
+    @abstractmethod
+    def desenhar(self, canvas):
+        pass
+    @abstractmethod
+    def desenhar_nova(self, canvas):
+        pass
+    @abstractmethod
+    def incompleta(self):
+        return False
+
+class Linha(Figura):
+    def __init__(self, x1, y1, cor, cor_preench=''):
+        super().__init__(cor, cor_preench)
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x1
+        self.y2 = y1
+    def atualizar(self, x, y):
+        self.x2 = x
+        self.y2 = y
+    def desenhar(self, canvas):
+        canvas.create_line(self.x1, self.y1, self.x2, self.y2, fill=self.cor)
+    def desenhar_nova(self, canvas):
+        canvas.create_line(self.x1, self.y1, self.x2, self.y2, fill=self.cor, dash=(4, 2))
+    def incompleta(self):
+        return self.x1 == self.x2 and self.y1 == self.y2
+
+class Rabisco(Figura):
+    def __init__(self, x1, y1, cor):
+        super().__init__(cor)
+        self.pontos = [(x1, y1)]
+    def atualizar(self, x, y):
+        self.pontos.append((x, y))
+    def desenhar(self, canvas):
+        canvas.create_line(self.pontos, fill=self.cor)
+    def desenhar_nova(self, canvas):
+         canvas.create_line(self.pontos, fill=self.cor, dash=(4, 2))
+    def incompleta(self):
+        return len(self.pontos) <= 1
+
+class Retangulos(Linha):
+    def __init__(self, x1, y1, cor, cor_preench):
+        super().__init__(x1, y1, cor, cor_preench)
+    def desenhar(self, canvas):
+        canvas.create_rectangle(self.x1, self.y1, self.x2, self.y2, outline=self.cor, fill=self.cor_preench)
+    def desenhar_nova(self, canvas):
+        canvas.create_rectangle(self.x1, self.y1, self.x2, self.y2, outline=self.cor, fill=self.cor_preench, dash=(4, 2))
+
+class Ovais(Linha):
+    def __init__(self, x1, y1, cor, cor_preench):
+        super().__init__(x1, y1, cor, cor_preench)
+    def desenhar(self, canvas):
+        canvas.create_oval(self.x1, self.y1, self.x2, self.y2, outline=self.cor, fill=self.cor_preench)
+    def desenhar_nova(self, canvas):
+        canvas.create_oval(self.x1, self.y1, self.x2, self.y2, outline=self.cor, fill=self.cor_preench, dash=(4, 2))
+
+class Circulos(Ovais):
+    def __init__(self, x1, y1, cor, cor_preench):
+        super().__init__(x1, y1, cor, cor_preench)
+    def atualizar(self, x, y):
+
+        lado = min(abs(x - self.x1), abs(y - self.y1))
+
+        if x >= self.x1:
+            self.x2 = self.x1 + lado
+        else:
+            self.x2 = self.x1 - lado
+
+        if y >= self.y1:
+            self.y2 = self.y1 + lado
+        else:
+            self.y2 = self.y1 - lado
+
+def iniciar_figura_nova(event):
     global figura_nova
     cor = cor_borda_var.get()
-    cor_preench = cor_preench_var.get()
-    if tipo_figura_var.get() == 'Linha':
-        figura_nova = ("linha", (event.x, event.y, event.x, event.y), cor, cor_preench)
-    elif tipo_figura_var.get() == 'Retangulos':
-        figura_nova = ('Retangulos', (event.x, event.y, event.x, event.y), cor, cor_preench)
-    elif tipo_figura_var.get() == 'Ovais':
-        figura_nova = ('Ovais', (event.x, event.y, event.x, event.y), cor, cor_preench)
-    elif tipo_figura_var.get() == 'Circulos':
-        figura_nova = ('Circulos', (event.x, event.y, event.x, event.y), cor, cor_preench)
-    else :
-        figura_nova = ("rabisco", [(event.x, event.y)], cor, cor_preench)
-
-# Quando mouse é movido com o botão pressionado
+    preench = cor_preench_var.get()
+    if tipo_figura_var.get() == "Linha":
+        figura_nova = Linha(event.x, event.y, cor)
+    elif tipo_figura_var.get() == "Rabisco":
+        figura_nova = Rabisco(event.x, event.y, cor)
+    elif tipo_figura_var.get() == "Retangulos":
+        figura_nova = Retangulos(event.x, event.y, cor, preench)
+    elif tipo_figura_var.get() == "Ovais":
+        figura_nova = Ovais(event.x, event.y, cor, preench)
+    else:
+        figura_nova = Circulos(event.x, event.y, cor, preench)
 def atualizar_figura_nova(event):
     global figura_nova
-    if figura_nova[0] == "rabisco":
-        figura_nova[1].append((event.x, event.y))
-        figura_nova = ('rabisco', figura_nova[1], figura_nova[2], figura_nova[3])
-    elif figura_nova[0] == 'Retangulos':
-        figura_nova = ('Retangulos', (figura_nova[1][0], figura_nova[1][1], event.x, event.y), figura_nova[2], figura_nova[3])
-    elif figura_nova[0] == 'Ovais':
-        figura_nova = ('Ovais',(figura_nova[1][0], figura_nova[1][1], event.x, event.y), figura_nova[2], figura_nova[3])
-    elif figura_nova[0] == "Circulos":
-        x1, y1 = figura_nova[1][0], figura_nova[1][1]
-        x2, y2 = event.x, event.y
-
-        lado = min(abs(x2 - x1), abs(y2 - y1))
-
-        if x2 < x1:
-            x2 = x1 - lado
-        else:
-            x2 = x1 + lado
-
-        if y2 < y1:
-            y2 = y1 - lado
-        else:
-            y2 = y1 + lado
-
-        figura_nova = ("Circulos", (x1, y1, x2, y2), figura_nova[2], figura_nova[3])
-    else : # figura_nova[0] == "linha"
-        figura_nova = ("linha", (figura_nova[1][0], figura_nova[1][1], event.x, event.y), figura_nova[2], figura_nova[3])
+    if figura_nova is None:
+        return
+    figura_nova.atualizar(event.x, event.y)
     desenhar_figuras()
-    desenhar_figura_nova()
-
-# Quando mouse é solto
-def incluir_figura_nova(event): 
-    if not incompleta(figura_nova): # para evitar incluir figuras incompletas, como uma linha sem comprimento ou um rabisco com um único ponto
-        figuras.append(figura_nova) 
+    figura_nova.desenhar_nova(canvas)
+def incluir_figura_nova(event):
+    global figura_nova
+    if figura_nova is None:
+        return
+    if not figura_nova.incompleta():
+        figuras.append(figura_nova)
+    figura_nova = None
     desenhar_figuras()
-
 def desenhar_figuras():
     canvas.delete("all")
-    for fig, values, cor, cor_preench in figuras:
-        if fig == "linha":
-            canvas.create_line(values[0], values[1], values[2], values[3], fill=cor)
-        elif fig == 'Retangulos':
-            canvas.create_rectangle(values[0], values[1], values[2], values[3], outline=cor, fill= cor_preench)
-        elif fig == 'Ovais':
-            canvas.create_oval(values[0], values[1], values[2], values[3], outline=cor, fill= cor_preench)
-        elif fig == "Circulos":
-            canvas.create_oval(values[0], values[1], values[2], values[3], outline=cor, fill= cor_preench)
-        else : # fig == "rabisco"
-            canvas.create_line(values,fill=cor)
-
-def desenhar_figura_nova():
-    fig, values, cor, cor_preench = figura_nova
-    if fig == "linha":
-        canvas.create_line(values[0], values[1], values[2], values[3], fill=cor,  dash=(4, 2))
-    elif fig == 'Retangulos':
-            canvas.create_rectangle(values[0], values[1], values[2], values[3], outline=cor, fill= cor_preench , dash=(4, 2))
-    elif fig == 'Ovais':
-            canvas.create_oval(values[0], values[1], values[2], values[3], outline=cor, fill= cor_preench, dash=(4, 2))
-    elif fig == "Circulos":
-            canvas.create_oval(values[0], values[1], values[2], values[3], outline=cor, fill= cor_preench, dash=(4, 2))
-    else : # fig == "rabisco"
-        canvas.create_line(values, fill=cor, dash=(4, 2))
-
-def incompleta(figura):
-    fig, values, cor, cor_preench = figura
-    if fig == "linha":
-        return (values[0], values[1]) == (values[2], values[3])
-    else : # fig == "rabisco"
-        return len(values) <= 1
-
-
-
-
+    for figura in figuras:
+        figura.desenhar(canvas)
+    if figura_nova is not None:
+        figura_nova.desenhar_nova(canvas)
+    
 #******* MAIN *******#
 
 figuras = []       # Todas as figuras desenhadas
